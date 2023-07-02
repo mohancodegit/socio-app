@@ -3,12 +3,19 @@ import dotenv from "dotenv";
 import multer from "multer";
 import helmet from "helmet";
 import cors from "cors";
-import mongoose from "mongoose";
 import morgan from "morgan";
 import { fileURLToPath } from "url";
 import path from "path";
 import { dbConnection } from "./dbConnections.js";
-
+import { userRegister } from "./controllers/authContollers.js";
+import { createPost } from "./controllers/postsContollers.js";
+import authRoutes from "./routes/authRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
+import postRoutes from "./routes/postRoutes.js";
+import { users, posts } from "./data/index.js";
+import { verifyToken } from "./middleware/authMiddleware.js";
+import User from "./models/userModel.js";
+import Post from "./models/postModel.js";
 dotenv.config();
 dbConnection();
 
@@ -36,8 +43,20 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
+/* ROUTES WITH FILES */
+app.post("/auth/register", upload.single("picture"), userRegister);
+app.post("/posts", verifyToken, upload.single("picture"), createPost);
+
+/* ROUTES */
+app.use("/auth", authRoutes);
+app.use("/users", userRoutes);
+app.use("/posts", postRoutes);
+
 const port = process.env.port || 5001;
 
 app.listen(port, () => {
   console.log(`connected to the ${port}`);
+  /* ADD DATA ONE TIME */
+  // User.insertMany(users);
+  // Post.insertMany(posts);
 });
